@@ -32,10 +32,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import com.example.core.util.ShareHelper
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -109,6 +112,7 @@ fun ColoringStudioScreen(
     var selectedBrush by remember { mutableStateOf(ColoringBrushType.GLITTER) }
     var selectedColor by remember { mutableStateOf(Color(0xFFFF5252)) }
     var selectedTemplate by remember { mutableStateOf(ColoringTemplate.BUTTERFLY) }
+    var showShareDialog by remember { mutableStateOf(false) }
 
     val palette = remember {
         listOf(
@@ -410,13 +414,107 @@ fun ColoringStudioScreen(
                     text = "Share 🎨",
                     onClick = {
                         soundManager.playStarEarned()
-                        shareArtwork(context, selectedTemplate.title)
+                        showShareDialog = true
                     },
                     backgroundColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary,
                     modifier = Modifier
                         .weight(1f)
                         .testTag("coloring_action_share")
+                )
+            }
+
+            // Share Options Dialog
+            if (showShareDialog) {
+                AlertDialog(
+                    onDismissRequest = { showShareDialog = false },
+                    title = {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text("🎨", fontSize = 26.sp)
+                            Text(
+                                text = "Share Artwork",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.ExtraBold
+                            )
+                        }
+                    },
+                    text = {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = "Show off your colorful ${selectedTemplate.title} artwork! 🌟",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+
+                            // Option 1: Share to installed apps
+                            KidsButton(
+                                text = "🚀 Share with Apps",
+                                onClick = {
+                                    soundManager.playButtonTap()
+                                    shareArtwork(context, selectedTemplate.title)
+                                    showShareDialog = false
+                                },
+                                backgroundColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .testTag("coloring_share_option_apps")
+                            )
+
+                            // Option 2: Copy to Clipboard
+                            KidsButton(
+                                text = "📋 Copy Artwork Note",
+                                onClick = {
+                                    soundManager.playButtonTap()
+                                    val text = "Look at my beautiful ${selectedTemplate.title} coloring artwork created on Tiny Trails! 🎨✨ Proud toddler artist creation!"
+                                    ShareHelper.copyToClipboard(
+                                        context = context,
+                                        label = "Tiny Trails Art",
+                                        text = text,
+                                        showToast = true
+                                    )
+                                    showShareDialog = false
+                                },
+                                backgroundColor = MaterialTheme.colorScheme.secondary,
+                                contentColor = MaterialTheme.colorScheme.onSecondary,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .testTag("coloring_share_option_copy")
+                            )
+
+                            // Option 3: Cheer artwork aloud
+                            KidsButton(
+                                text = "🔊 Cheer for Masterpiece!",
+                                onClick = {
+                                    soundManager.playCorrectChime()
+                                    soundManager.speak(
+                                        "Look at this super colorful ${selectedTemplate.title}! You are such a fantastic artist! High five!"
+                                    )
+                                    showShareDialog = false
+                                },
+                                backgroundColor = MaterialTheme.colorScheme.tertiary,
+                                contentColor = MaterialTheme.colorScheme.onTertiary,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .testTag("coloring_share_option_cheer")
+                            )
+                        }
+                    },
+                    confirmButton = {},
+                    dismissButton = {
+                        TextButton(
+                            onClick = { showShareDialog = false },
+                            modifier = Modifier.testTag("coloring_share_dialog_close")
+                        ) {
+                            Text("Close", fontWeight = FontWeight.Bold)
+                        }
+                    }
                 )
             }
         }
@@ -599,10 +697,11 @@ private fun DrawScope.drawTemplateOutline(template: ColoringTemplate) {
 }
 
 private fun shareArtwork(context: Context, templateTitle: String) {
-    val shareIntent = Intent(Intent.ACTION_SEND).apply {
-        type = "text/plain"
-        putExtra(Intent.EXTRA_SUBJECT, "Tiny Trails Masterpiece 🎨")
-        putExtra(Intent.EXTRA_TEXT, "Look at my beautiful $templateTitle coloring artwork created on Tiny Trails! 🌟✨")
-    }
-    context.startActivity(Intent.createChooser(shareIntent, "Share Tiny Trails Artwork"))
+    val shareBody = "Look at my beautiful $templateTitle coloring artwork created on Tiny Trails! 🎨✨ Proud toddler artist creation!"
+    ShareHelper.shareText(
+        context = context,
+        subject = "Tiny Trails Masterpiece: $templateTitle 🎨",
+        body = shareBody,
+        chooserTitle = "Share Tiny Trails Artwork"
+    )
 }

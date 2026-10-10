@@ -23,12 +23,15 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import com.example.core.util.ShareHelper
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -74,6 +77,7 @@ fun CertificateScreen(
     var selectedCertId by remember { mutableStateOf(CertificateDefinitions.ALL_CERTIFICATES.first().id) }
     var childName by remember { mutableStateOf("Little Explorer") }
     var showEditNameDialog by remember { mutableStateOf(false) }
+    var showShareDialog by remember { mutableStateOf(false) }
     var celebrationTriggerCount by remember { mutableIntStateOf(0) }
 
     val currentDate = remember {
@@ -453,7 +457,7 @@ fun CertificateScreen(
                             text = "Share / Print 🖨️",
                             onClick = {
                                 soundManager.playStarEarned()
-                                shareCertificate(context, childName, selectedCert, currentDate)
+                                showShareDialog = true
                             },
                             backgroundColor = MaterialTheme.colorScheme.primary,
                             contentColor = MaterialTheme.colorScheme.onPrimary,
@@ -465,6 +469,100 @@ fun CertificateScreen(
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
+            }
+
+            // Share Options Dialog
+            if (showShareDialog) {
+                AlertDialog(
+                    onDismissRequest = { showShareDialog = false },
+                    title = {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text("🏆", fontSize = 26.sp)
+                            Text(
+                                text = "Share Diploma",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.ExtraBold
+                            )
+                        }
+                    },
+                    text = {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = "Celebrate $childName's accomplishment: ${selectedCert.title} ${selectedCert.badgeEmoji}!",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+
+                            // Option 1: Share to installed apps
+                            KidsButton(
+                                text = "🚀 Share with Apps",
+                                onClick = {
+                                    soundManager.playButtonTap()
+                                    shareCertificate(context, childName, selectedCert, currentDate)
+                                    showShareDialog = false
+                                },
+                                backgroundColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .testTag("cert_share_option_apps")
+                            )
+
+                            // Option 2: Copy diploma to clipboard
+                            KidsButton(
+                                text = "📋 Copy Diploma Text",
+                                onClick = {
+                                    soundManager.playButtonTap()
+                                    val shareBody = buildCertificateBody(childName, selectedCert, currentDate)
+                                    ShareHelper.copyToClipboard(
+                                        context = context,
+                                        label = "Diploma: ${selectedCert.title}",
+                                        text = shareBody,
+                                        showToast = true
+                                    )
+                                    showShareDialog = false
+                                },
+                                backgroundColor = MaterialTheme.colorScheme.secondary,
+                                contentColor = MaterialTheme.colorScheme.onSecondary,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .testTag("cert_share_option_copy")
+                            )
+
+                            // Option 3: Read aloud with child voice
+                            KidsButton(
+                                text = "🔊 Read Diploma Aloud",
+                                onClick = {
+                                    soundManager.playCorrectChime()
+                                    soundManager.speak(
+                                        "Yay! Tiny Trails Certificate of Achievement proudly awarded to $childName for ${selectedCert.title}! ${selectedCert.description} Super job, superstar!"
+                                    )
+                                    showShareDialog = false
+                                },
+                                backgroundColor = MaterialTheme.colorScheme.tertiary,
+                                contentColor = MaterialTheme.colorScheme.onTertiary,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .testTag("cert_share_option_read")
+                            )
+                        }
+                    },
+                    confirmButton = {},
+                    dismissButton = {
+                        TextButton(
+                            onClick = { showShareDialog = false },
+                            modifier = Modifier.testTag("cert_share_dialog_close")
+                        ) {
+                            Text("Close", fontWeight = FontWeight.Bold)
+                        }
+                    }
+                )
             }
 
             // Celebratory Particle Explosion
@@ -479,27 +577,30 @@ fun CertificateScreen(
     }
 }
 
+private fun buildCertificateBody(recipient: String, cert: MilestoneCertificate, date: String): String {
+    return """
+        🎓 CERTIFICATE OF ACHIEVEMENT 🎓
+        Presented to: $recipient
+        Award: ${cert.title} ${cert.badgeEmoji}
+        Date: $date
+        
+        "${cert.description}"
+        
+        Issued by Tiny Trails Early Learning Academy ✨
+    """.trimIndent()
+}
+
 private fun shareCertificate(
     context: Context,
     recipient: String,
     cert: MilestoneCertificate,
     date: String
 ) {
-    val shareBody = """
-        🎓 CERTIFICATE OF ACHIEVEMENT 🎓
-        Presented to: $recipient
-        Award: ${cert.title} ${cert.badgeEmoji}
-        $date
-        
-        "${cert.description}"
-        
-        Issued by Tiny Trails Early Learning Academy ✨
-    """.trimIndent()
-
-    val intent = Intent(Intent.ACTION_SEND).apply {
-        type = "text/plain"
-        putExtra(Intent.EXTRA_SUBJECT, "Milestone Certificate: ${cert.title}")
-        putExtra(Intent.EXTRA_TEXT, shareBody)
-    }
-    context.startActivity(Intent.createChooser(intent, "Share / Print Certificate"))
+    val shareBody = buildCertificateBody(recipient, cert, date)
+    ShareHelper.shareText(
+        context = context,
+        subject = "Milestone Certificate: ${cert.title}",
+        body = shareBody,
+        chooserTitle = "Share / Print Certificate"
+    )
 }
