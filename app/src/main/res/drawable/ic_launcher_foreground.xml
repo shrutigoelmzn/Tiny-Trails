@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Star sparkle at top right -->
+    <path
+        android:fillColor="#FFD54F"
+        android:pathData="M78,24 L81,32 L89,35 L81,38 L78,46 L75,38 L67,35 L75,32 Z" />
+
+    <!-- Cute Sprout Leaf -->
+    <path
+        android:fillColor="#A5D6A7"
+        android:pathData="M38,32 C48,22 62,26 62,38 C50,38 42,44 38,32 Z" />
+
+    <!-- Dotted tracing trail guide -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M36,78 C36,52 46,42 66,48 C76,54 68,76 48,74" />
+
+    <!-- Golden star target at end of trail -->
+    <path
+        android:fillColor="#FFA000"
+        android:pathData="M36,78 M36,72 L38,76 L42,77 L39,80 L40,84 L36,82 L32,84 L33,80 L30,77 L34,76 Z" />
+</vector>
