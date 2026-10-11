@@ -89,7 +89,8 @@ fun HomeScreen(
     onNavigateProgress: () -> Unit = {},
     onNavigateColoring: () -> Unit = {},
     onNavigatePet: () -> Unit = {},
-    onNavigateCertificates: () -> Unit = {}
+    onNavigateCertificates: () -> Unit = {},
+    onNavigateSettings: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val progressRepo = remember { ProgressRepository.getInstance(context) }
@@ -157,43 +158,15 @@ fun HomeScreen(
                     )
                 }
 
-                // Header Action Buttons
+                // Right: Uncrowded Header Actions (Parent Zone & Prominent Settings Button)
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Star Progress Button
-                    Box(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .shadow(3.dp, CircleShape)
-                            .clip(CircleShape)
-                            .background(Color(0xFFFFF9C4))
-                            .clickable(onClick = onNavigateProgress)
-                            .testTag("home_header_progress_button"),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(text = "⭐", fontSize = 22.sp)
-                    }
-
-                    // Certificate Award Button
-                    Box(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .shadow(3.dp, CircleShape)
-                            .clip(CircleShape)
-                            .background(Color(0xFFE8EAF6))
-                            .clickable(onClick = onNavigateCertificates)
-                            .testTag("home_header_certificates_button"),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(text = "🎓", fontSize = 22.sp)
-                    }
-
                     // Parent Zone Button (Shield)
                     Box(
                         modifier = Modifier
-                            .size(48.dp)
+                            .size(52.dp)
                             .shadow(3.dp, CircleShape)
                             .clip(CircleShape)
                             .background(MaterialTheme.colorScheme.surface)
@@ -201,34 +174,20 @@ fun HomeScreen(
                             .testTag("home_parent_zone_button"),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(text = "🛡️", fontSize = 22.sp)
+                        Text(text = "🛡️", fontSize = 24.sp)
                     }
 
-                    // Theme Emoji Button
+                    // Prominent Settings Button with Gear Logo only (spacious 58dp circle with 32dp icon)
                     Box(
                         modifier = Modifier
-                            .size(48.dp)
-                            .shadow(3.dp, CircleShape)
+                            .size(58.dp)
+                            .shadow(4.dp, CircleShape)
                             .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.surface)
-                            .clickable { showSettingsDialog = true }
-                            .testTag("home_theme_button"),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = themeTokens.themeEmoji,
-                            fontSize = 22.sp
-                        )
-                    }
-
-                    // Settings Button
-                    Box(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .shadow(3.dp, CircleShape)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.surface)
-                            .clickable { showSettingsDialog = true }
+                            .background(MaterialTheme.colorScheme.primaryContainer)
+                            .clickable {
+                                soundManager.playButtonTap()
+                                onNavigateSettings()
+                            }
                             .testTag("home_settings_button"),
                         contentAlignment = Alignment.Center
                     ) {
@@ -236,7 +195,7 @@ fun HomeScreen(
                             imageVector = Icons.Default.Settings,
                             contentDescription = stringResource(R.string.settings_title),
                             tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(32.dp)
                         )
                     }
                 }

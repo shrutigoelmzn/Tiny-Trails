@@ -28,6 +28,9 @@ class BackgroundMusicManager private constructor(private val context: Context) {
     private var audioTrack: AudioTrack? = null
 
     private var isMusicEnabled = true
+    private val _isMusicEnabledFlow = kotlinx.coroutines.flow.MutableStateFlow(true)
+    val isMusicEnabledFlow: kotlinx.coroutines.flow.StateFlow<Boolean> = _isMusicEnabledFlow
+
     private var musicVolume = 0.50f // Soft background level
 
     // Gentle, calming lullaby/nursery melody notes in Hertz (C major / Pentatonic)
@@ -52,11 +55,18 @@ class BackgroundMusicManager private constructor(private val context: Context) {
     fun setMusicEnabled(enabled: Boolean) {
         if (isMusicEnabled == enabled) return
         isMusicEnabled = enabled
+        _isMusicEnabledFlow.value = enabled
         if (enabled) {
             start()
         } else {
             stop()
         }
+    }
+
+    fun toggleMusic(): Boolean {
+        val next = !isMusicEnabled
+        setMusicEnabled(next)
+        return next
     }
 
     fun isEnabled(): Boolean = isMusicEnabled

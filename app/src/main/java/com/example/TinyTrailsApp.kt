@@ -30,6 +30,7 @@ import com.example.feature.coloring.ColoringStudioScreen
 import com.example.feature.pet.VirtualPetScreen
 import com.example.feature.stickers.StickerGalleryScreen
 import com.example.feature.tracing.TracingScreen
+import com.example.feature.settings.SettingsScreen
 import com.example.ui.theme.TinyTrailsTheme
 import kotlinx.coroutines.launch
 
@@ -139,6 +140,9 @@ fun TinyTrailsApp() {
                         },
                         onNavigateCertificates = {
                             navController.navigate("certificates")
+                        },
+                        onNavigateSettings = {
+                            navController.navigate("settings")
                         }
                     )
                 }
@@ -261,7 +265,11 @@ fun TinyTrailsApp() {
 
                 composable("parent") {
                     ParentAreaScreen(
-                        onBack = { navController.popBackStack() }
+                        onBack = { navController.popBackStack() },
+                        currentLanguage = currentLanguage,
+                        onLanguageChange = { newLang ->
+                            scope.launch { preferencesRepo.setLanguage(newLang) }
+                        }
                     )
                 }
 
@@ -292,6 +300,41 @@ fun TinyTrailsApp() {
                 composable("certificates") {
                     CertificateScreen(
                         onBack = { navController.popBackStack() }
+                    )
+                }
+
+                composable("settings") {
+                    SettingsScreen(
+                        onBack = { navController.popBackStack() },
+                        currentTheme = currentTheme,
+                        currentLanguage = currentLanguage,
+                        audioFeedbackEnabled = audioFeedbackEnabled,
+                        backgroundMusicEnabled = backgroundMusicEnabled,
+                        appVolume = appVolume,
+                        onThemeChange = { newMode ->
+                            scope.launch { preferencesRepo.setThemeMode(newMode) }
+                        },
+                        onLanguageChange = { newLang ->
+                            scope.launch { preferencesRepo.setLanguage(newLang) }
+                        },
+                        onAudioFeedbackChange = { enabled ->
+                            scope.launch { preferencesRepo.setAudioFeedbackEnabled(enabled) }
+                        },
+                        onBackgroundMusicChange = { enabled ->
+                            scope.launch { preferencesRepo.setBackgroundMusicEnabled(enabled) }
+                        },
+                        onVolumeChange = { volume ->
+                            scope.launch { preferencesRepo.setAppVolume(volume) }
+                        },
+                        onNavigateParent = {
+                            navController.navigate("parent")
+                        },
+                        onNavigateProgress = {
+                            navController.navigate("progress")
+                        },
+                        onNavigateCertificates = {
+                            navController.navigate("certificates")
+                        }
                     )
                 }
             }

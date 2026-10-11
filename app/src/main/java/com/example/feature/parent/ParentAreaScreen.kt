@@ -2,6 +2,7 @@ package com.example.feature.parent
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -144,7 +145,9 @@ fun ParentGateDialog(
 
 @Composable
 fun ParentAreaScreen(
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    currentLanguage: String = "en",
+    onLanguageChange: (String) -> Unit = {}
 ) {
     BackHandler(onBack = onBack)
     val context = LocalContext.current
@@ -280,6 +283,81 @@ fun ParentAreaScreen(
                                         color = MaterialTheme.colorScheme.onErrorContainer
                                     )
                                 }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Language & Audio Settings Card
+            Card(
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                modifier = Modifier.fillMaxWidth().shadow(4.dp, RoundedCornerShape(20.dp))
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Text(
+                        text = "🌐 Learning Language / भाषा",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = "Select child narration & tracing learning language:",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        val isEn = currentLanguage != "hi"
+                        Card(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable { onLanguageChange("en") }
+                                .testTag("parent_lang_en_button"),
+                            shape = RoundedCornerShape(14.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (isEn) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
+                            )
+                        ) {
+                            Box(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "🇬🇧 English",
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isEn) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+
+                        val isHi = currentLanguage == "hi"
+                        Card(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable { onLanguageChange("hi") }
+                                .testTag("parent_lang_hi_button"),
+                            shape = RoundedCornerShape(14.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (isHi) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
+                            )
+                        ) {
+                            Box(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "🇮🇳 हिन्दी (Hindi)",
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isHi) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
                             }
                         }
                     }

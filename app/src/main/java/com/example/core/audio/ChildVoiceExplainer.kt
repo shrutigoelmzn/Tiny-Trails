@@ -158,16 +158,31 @@ object ChildVoiceExplainer {
 
         if (isHindi) {
             return if (stars >= 3) {
-                listOf(
-                    "शाबाश! पूरे तीन सितारे! तुमने $cleanVal बहुत सुंदर बनाया!",
-                    "वाह! कमाल कर दिया! तीन सितारे मिले!",
-                    "अरे वाह! बहुत बढ़िया! शाबाश!"
-                ).random()
+                if (cleanVal.isNotEmpty()) {
+                    listOf(
+                        "शाबाश! पूरे तीन सितारे! तुमने $cleanVal बहुत सुंदर बनाया!",
+                        "वाह! तुमने $cleanVal बना कर कमाल कर दिया! तीन सितारे मिले!",
+                        "अरे वाह! $cleanVal बहुत बढ़िया बनाया! शाबाश!"
+                    ).random()
+                } else {
+                    listOf(
+                        "शाबाश! पूरे तीन सितारे! बहुत सुंदर बनाया!",
+                        "वाह! कमाल कर दिया! तीन सितारे मिले!",
+                        "अरे वाह! बहुत बढ़िया! शाबाश!"
+                    ).random()
+                }
             } else {
-                listOf(
-                    "शाबाश! बहुत बढ़िया प्रयास!",
-                    "वाह! तुमने $cleanVal बहुत अच्छा बनाया!"
-                ).random()
+                if (cleanVal.isNotEmpty()) {
+                    listOf(
+                        "शाबाश! $cleanVal का बहुत बढ़िया प्रयास!",
+                        "वाह! तुमने $cleanVal बहुत अच्छा बनाया!"
+                    ).random()
+                } else {
+                    listOf(
+                        "शाबाश! बहुत बढ़िया प्रयास!",
+                        "वाह! बहुत अच्छा बनाया!"
+                    ).random()
+                }
             }
         }
 
@@ -176,7 +191,7 @@ object ChildVoiceExplainer {
                 listOf(
                     "Yippee! Three shiny golden stars for $cleanVal! You are a superstar tracer!",
                     "Hooray! Look at that, you traced $cleanVal! High five, little artist!",
-                    "Woohoo! That looks so super-duper amazing! Three shiny stars for you!",
+                    "Woohoo! Tracing $cleanVal looks so super-duper amazing! Three shiny stars for you!",
                     "Yay! Fantastic job tracing $cleanVal$withExample! Give me a high five!",
                     "Awesome! Look how pretty your $cleanVal is! You did it!"
                 ).random()

@@ -17,6 +17,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -145,6 +146,8 @@ fun ParticleExplosionEffect(
             )
         }
 
+        val scope = rememberCoroutineScope()
+
         // Active tap bursts list for interactive screen touches
         val tapBursts = remember { mutableStateListOf<TapBurst>() }
 
@@ -175,11 +178,11 @@ fun ParticleExplosionEffect(
             Modifier.pointerInput(Unit) {
                 detectTapGestures { tapPos ->
                     val miniBurstParticles = generateExplosionParticles(
-                        count = 28,
+                        count = 20,
                         origin = tapPos,
                         screenWidth = width,
                         screenHeight = height,
-                        maxDistanceMultiplier = 0.50f
+                        maxDistanceMultiplier = 0.42f
                     )
                     val burstProgress = Animatable(0f)
                     val newBurst = TapBurst(
@@ -188,30 +191,22 @@ fun ParticleExplosionEffect(
                         particles = miniBurstParticles,
                         progress = burstProgress
                     )
+                    if (tapBursts.size >= 8) {
+                        tapBursts.removeAt(0)
+                    }
                     tapBursts.add(newBurst)
+
+                    scope.launch {
+                        burstProgress.animateTo(
+                            targetValue = 1f,
+                            animationSpec = tween(durationMillis = 750, easing = LinearOutSlowInEasing)
+                        )
+                        tapBursts.remove(newBurst)
+                    }
                 }
             }
         } else {
             Modifier
-        }
-
-        // Clean up finished tap bursts
-        LaunchedEffect(tapBursts.size) {
-            val toRemove = mutableListOf<TapBurst>()
-            for (burst in tapBursts) {
-                if (burst.progress.value == 0f) {
-                    launch {
-                        burst.progress.animateTo(
-                            targetValue = 1f,
-                            animationSpec = tween(durationMillis = 1400, easing = LinearOutSlowInEasing)
-                        )
-                        toRemove.add(burst)
-                    }
-                }
-            }
-            if (toRemove.isNotEmpty()) {
-                tapBursts.removeAll(toRemove)
-            }
         }
 
         Canvas(
@@ -245,7 +240,7 @@ fun ParticleExplosionEffect(
             }
 
             // 2. Render primary Compose-animated explosion particles
-            if (progressVal > 0f) {
+            if (progressVal in 0.01f..0.99f) {
                 for (p in mainParticles) {
                     drawParticleAtProgress(
                         particle = p,
@@ -254,10 +249,10 @@ fun ParticleExplosionEffect(
                 }
             }
 
-            // 3. Render any interactive tap bursts
-            for (burst in tapBursts) {
+            // 3. Render any interactive tap bursts (only while strictly active < 1f)
+            for (burst in tapBursts.toList()) {
                 val burstVal = burst.progress.value
-                if (burstVal > 0f) {
+                if (burstVal in 0.01f..0.99f) {
                     for (p in burst.particles) {
                         drawParticleAtProgress(
                             particle = p,
@@ -267,8 +262,8 @@ fun ParticleExplosionEffect(
                 }
             }
 
-            // 4. Render gentle ambient floating confetti while session remains completed
-            if (progressVal > 0.40f) {
+            // 4. Render gentle ambient floating confetti during the main active explosion window only
+            if (progressVal in 0.40f..0.98f) {
                 drawAmbientConfetti(
                     screenWidth = width,
                     screenHeight = height,
@@ -288,7 +283,7 @@ private fun DrawScope.drawParticleAtProgress(
 ) {
     // Account for staggered release delay
     val effectiveProgress = ((progress - particle.delayRatio) / (1f - particle.delayRatio)).coerceIn(0f, 1f)
-    if (effectiveProgress <= 0f) return
+    if (effectiveProgress <= 0f || effectiveProgress >= 0.999f) return
 
     // Eased radial expansion from origin
     val radialDistance = particle.maxDistance * (1f - (1f - effectiveProgress) * (1f - effectiveProgress))

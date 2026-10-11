@@ -70,6 +70,14 @@ import com.example.R
 import com.example.core.audio.SoundManager
 import com.example.core.designsystem.components.KidsButton
 import com.example.core.designsystem.components.KidsTopBar
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.drawscope.CanvasDrawScope
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.LayoutDirection
+import kotlin.math.cos
+import kotlin.math.hypot
 import kotlin.math.sin
 import kotlin.random.Random
 
@@ -86,7 +94,11 @@ enum class ColoringTemplate(val title: String, val emoji: String) {
     BUTTERFLY("Butterfly", "🦋"),
     DINOSAUR("Dino", "🦕"),
     ROCKET("Rocket", "🚀"),
-    TEDDY("Teddy", "🧸")
+    TEDDY("Teddy", "🧸"),
+    STAR("Star", "⭐"),
+    HEART("Heart", "💖"),
+    FLOWER("Flower", "🌸"),
+    FISH("Fish", "🐠")
 }
 
 data class ColoringStroke(
@@ -108,6 +120,79 @@ fun ColoringStudioScreen(
 
     val strokes = remember { mutableStateListOf<ColoringStroke>() }
     var currentPoints = remember { mutableStateListOf<Offset>() }
+    val undoStack = remember { mutableStateListOf<List<ColoringStroke>>() }
+    var canvasSize by remember { mutableStateOf(IntSize.Zero) }
+    var eraserPos by remember { mutableStateOf<Offset?>(null) }
+    var lastEraserPos by remember { mutableStateOf<Offset?>(null) }
+
+    fun pushUndo() {
+        if (undoStack.size >= 20) {
+            undoStack.removeAt(0)
+        }
+        undoStack.add(strokes.toList())
+    }
+
+    fun eraseColorNear(center: Offset, radius: Float = 48f) {
+        if (strokes.isEmpty()) return
+        val radiusSq = radius * radius
+        val updatedStrokes = mutableListOf<ColoringStroke>()
+        var didModify = false
+
+        for (stroke in strokes) {
+            val points = stroke.points
+            if (points.isEmpty()) continue
+
+            var hitAny = false
+            val newSegments = mutableListOf<MutableList<Offset>>()
+            var curSegment = mutableListOf<Offset>()
+
+            for (pt in points) {
+                val dx = pt.x - center.x
+                val dy = pt.y - center.y
+                val d2 = dx * dx + dy * dy
+                if (d2 <= radiusSq) {
+                    hitAny = true
+                    didModify = true
+                    if (curSegment.size >= 2) {
+                        newSegments.add(curSegment)
+                        curSegment = mutableListOf()
+                    } else {
+                        curSegment.clear()
+                    }
+                } else {
+                    curSegment.add(pt)
+                }
+            }
+            if (curSegment.size >= 2) {
+                newSegments.add(curSegment)
+            }
+
+            if (hitAny) {
+                for (seg in newSegments) {
+                    updatedStrokes.add(stroke.copy(points = seg))
+                }
+            } else {
+                updatedStrokes.add(stroke)
+            }
+        }
+
+        if (didModify) {
+            strokes.clear()
+            strokes.addAll(updatedStrokes)
+        }
+    }
+
+    fun interpolateAndErase(from: Offset, to: Offset, radius: Float = 48f) {
+        val dx = to.x - from.x
+        val dy = to.y - from.y
+        val dist = hypot(dx.toDouble(), dy.toDouble()).toFloat()
+        val steps = (dist / 14f).toInt().coerceAtLeast(1)
+        for (i in 0..steps) {
+            val t = i / steps.toFloat()
+            val interpolated = Offset(from.x + dx * t, from.y + dy * t)
+            eraseColorNear(interpolated, radius)
+        }
+    }
 
     var selectedBrush by remember { mutableStateOf(ColoringBrushType.GLITTER) }
     var selectedColor by remember { mutableStateOf(Color(0xFFFF5252)) }
@@ -226,66 +311,112 @@ fun ColoringStudioScreen(
                     Canvas(
                         modifier = Modifier
                             .fillMaxSize()
+                            .onSizeChanged { canvasSize = it }
                             .pointerInput(selectedBrush, selectedColor) {
                                 detectDragGestures(
                                     onDragStart = { offset ->
-                                        currentPoints.clear()
-                                        currentPoints.add(offset)
                                         soundManager.playTouchFeedback()
+                                        if (selectedBrush == ColoringBrushType.ERASER) {
+                                            pushUndo()
+                                            eraserPos = offset
+                                            lastEraserPos = offset
+                                            eraseColorNear(offset)
+                                        } else {
+                                            pushUndo()
+                                            currentPoints.clear()
+                                            currentPoints.add(offset)
+                                        }
                                     },
                                     onDrag = { change, _ ->
                                         change.consume()
-                                        currentPoints.add(change.position)
+                                        if (selectedBrush == ColoringBrushType.ERASER) {
+                                            eraserPos = change.position
+                                            val prev = lastEraserPos ?: change.position
+                                            interpolateAndErase(prev, change.position)
+                                            lastEraserPos = change.position
+                                        } else {
+                                            currentPoints.add(change.position)
+                                        }
                                     },
                                     onDragEnd = {
-                                        if (currentPoints.isNotEmpty()) {
-                                            val strokeWidth = when (selectedBrush) {
-                                                ColoringBrushType.ERASER -> 48f
-                                                ColoringBrushType.GLITTER -> 32f
-                                                ColoringBrushType.RAINBOW -> 28f
-                                                ColoringBrushType.STARS -> 26f
-                                                ColoringBrushType.CRAYON -> 22f
-                                            }
-                                            strokes.add(
-                                                ColoringStroke(
-                                                    points = currentPoints.toList(),
-                                                    color = if (selectedBrush == ColoringBrushType.ERASER) Color.White else selectedColor,
-                                                    brushType = selectedBrush,
-                                                    strokeWidth = strokeWidth
+                                        if (selectedBrush == ColoringBrushType.ERASER) {
+                                            eraserPos = null
+                                            lastEraserPos = null
+                                        } else {
+                                            if (currentPoints.isNotEmpty()) {
+                                                val strokeWidth = when (selectedBrush) {
+                                                    ColoringBrushType.GLITTER -> 36f
+                                                    ColoringBrushType.RAINBOW -> 32f
+                                                    ColoringBrushType.STARS -> 30f
+                                                    ColoringBrushType.CRAYON -> 28f
+                                                    ColoringBrushType.ERASER -> 0f
+                                                }
+                                                strokes.add(
+                                                    ColoringStroke(
+                                                        points = currentPoints.toList(),
+                                                        color = selectedColor,
+                                                        brushType = selectedBrush,
+                                                        strokeWidth = strokeWidth
+                                                    )
                                                 )
-                                            )
-                                            currentPoints.clear()
+                                                currentPoints.clear()
+                                            }
                                         }
+                                    },
+                                    onDragCancel = {
+                                        eraserPos = null
+                                        lastEraserPos = null
+                                        currentPoints.clear()
                                     }
                                 )
                             }
                             .testTag("coloring_canvas")
                     ) {
-                        // 1. Draw Template Outlines (Light Gray guides)
+                        // 1. Draw Template Outlines initially as background guide
                         drawTemplateOutline(selectedTemplate)
 
-                        // 2. Draw Committed Strokes
+                        // 2. Draw Committed Coloring Strokes (only colored strokes)
                         for (stroke in strokes) {
                             renderColoringStroke(stroke, shimmerPhase)
                         }
 
-                        // 3. Draw Active In-Progress Stroke
-                        if (currentPoints.size > 1) {
+                        // 3. Draw Active In-Progress Color Stroke
+                        if (selectedBrush != ColoringBrushType.ERASER && currentPoints.size > 1) {
                             val activeWidth = when (selectedBrush) {
-                                ColoringBrushType.ERASER -> 48f
-                                ColoringBrushType.GLITTER -> 32f
-                                ColoringBrushType.RAINBOW -> 28f
-                                ColoringBrushType.STARS -> 26f
-                                ColoringBrushType.CRAYON -> 22f
+                                ColoringBrushType.GLITTER -> 36f
+                                ColoringBrushType.RAINBOW -> 32f
+                                ColoringBrushType.STARS -> 30f
+                                ColoringBrushType.CRAYON -> 28f
+                                ColoringBrushType.ERASER -> 0f
                             }
                             renderColoringStroke(
                                 ColoringStroke(
                                     points = currentPoints.toList(),
-                                    color = if (selectedBrush == ColoringBrushType.ERASER) Color.White else selectedColor,
+                                    color = selectedColor,
                                     brushType = selectedBrush,
                                     strokeWidth = activeWidth
                                 ),
                                 shimmerPhase
+                            )
+                        }
+
+                        // 4. Always draw crisp bold template outlines on top so outlines are never obscured
+                        if (selectedTemplate != ColoringTemplate.BLANK) {
+                            drawTemplateOutline(selectedTemplate)
+                        }
+
+                        // 5. Visual Toddler Eraser ring cursor when actively erasing
+                        if (selectedBrush == ColoringBrushType.ERASER && eraserPos != null) {
+                            drawCircle(
+                                color = Color(0xFF64B5F6).copy(alpha = 0.35f),
+                                radius = 48f,
+                                center = eraserPos!!
+                            )
+                            drawCircle(
+                                color = Color(0xFF1E88E5),
+                                radius = 48f,
+                                center = eraserPos!!,
+                                style = Stroke(width = 3.5f)
                             )
                         }
                     }
@@ -383,7 +514,11 @@ fun ColoringStudioScreen(
                 KidsButton(
                     text = "Undo ↩️",
                     onClick = {
-                        if (strokes.isNotEmpty()) {
+                        if (undoStack.isNotEmpty()) {
+                            soundManager.playButtonTap()
+                            strokes.clear()
+                            strokes.addAll(undoStack.removeAt(undoStack.lastIndex))
+                        } else if (strokes.isNotEmpty()) {
                             soundManager.playButtonTap()
                             strokes.removeAt(strokes.lastIndex)
                         }
@@ -399,8 +534,11 @@ fun ColoringStudioScreen(
                 KidsButton(
                     text = "Clear 🧹",
                     onClick = {
-                        soundManager.playChime()
-                        strokes.clear()
+                        if (strokes.isNotEmpty()) {
+                            pushUndo()
+                            soundManager.playChime()
+                            strokes.clear()
+                        }
                     },
                     backgroundColor = Color(0xFFFFCDD2),
                     contentColor = Color(0xFFC62828),
@@ -447,17 +585,23 @@ fun ColoringStudioScreen(
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Text(
-                                text = "Show off your colorful ${selectedTemplate.title} artwork! 🌟",
+                                text = "Show off your colorful ${selectedTemplate.title} artwork as a picture! 🌟",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
 
-                            // Option 1: Share to installed apps
+                            // Option 1: Share Colored Shape Image (Professional high-quality picture)
                             KidsButton(
-                                text = "🚀 Share with Apps",
+                                text = "🖼️ Share Colored Shape (Picture)",
                                 onClick = {
-                                    soundManager.playButtonTap()
-                                    shareArtwork(context, selectedTemplate.title)
+                                    soundManager.playStarEarned()
+                                    shareArtwork(
+                                        context = context,
+                                        template = selectedTemplate,
+                                        strokes = strokes.toList(),
+                                        canvasWidth = canvasSize.width,
+                                        canvasHeight = canvasSize.height
+                                    )
                                     showShareDialog = false
                                 },
                                 backgroundColor = MaterialTheme.colorScheme.primary,
@@ -539,11 +683,7 @@ private fun DrawScope.renderColoringStroke(stroke: ColoringStroke, shimmerPhase:
 
     when (stroke.brushType) {
         ColoringBrushType.ERASER -> {
-            drawPath(
-                path = path,
-                color = Color.White,
-                style = Stroke(width = stroke.strokeWidth, cap = StrokeCap.Round, join = StrokeJoin.Round)
-            )
+            // Eraser acts by removing and carving color stroke points directly, preserving shapes and canvas
         }
         ColoringBrushType.CRAYON -> {
             drawPath(
@@ -617,91 +757,316 @@ private fun DrawScope.renderColoringStroke(stroke: ColoringStroke, shimmerPhase:
 }
 
 /**
- * Draws cute toddler black-line outlines for coloring templates
+ * Draws bold, cute toddler outlines for coloring templates.
+ * Shapes are scaled 2x with bold 14f borders (2-3x thickness) for easy, beautiful toddler coloring.
  */
 private fun DrawScope.drawTemplateOutline(template: ColoringTemplate) {
+    if (template == ColoringTemplate.BLANK) return
+
     val cx = size.width / 2f
     val cy = size.height / 2f
-    val outlineColor = Color(0xFF90A4AE)
-    val stroke = Stroke(width = 5f, cap = StrokeCap.Round, join = StrokeJoin.Round)
+    // High-contrast, friendly coloring-book charcoal outline
+    val outlineColor = Color(0xFF2C3E50)
+    // 14f border stroke: 2.8x thicker than original 5f for bold, clear boundaries
+    val stroke = Stroke(width = 14f, cap = StrokeCap.Round, join = StrokeJoin.Round)
+    val detailStroke = Stroke(width = 9f, cap = StrokeCap.Round, join = StrokeJoin.Round)
 
     when (template) {
         ColoringTemplate.BUTTERFLY -> {
-            // Butterfly wings
-            drawOval(color = outlineColor, topLeft = Offset(cx - 160f, cy - 140f), size = Size(150f, 130f), style = stroke)
-            drawOval(color = outlineColor, topLeft = Offset(cx + 10f, cy - 140f), size = Size(150f, 130f), style = stroke)
-            drawOval(color = outlineColor, topLeft = Offset(cx - 130f, cy - 10f), size = Size(120f, 100f), style = stroke)
-            drawOval(color = outlineColor, topLeft = Offset(cx + 10f, cy - 10f), size = Size(120f, 100f), style = stroke)
-            // Body
-            drawRoundRect(color = outlineColor, topLeft = Offset(cx - 15f, cy - 110f), size = Size(30f, 180f), cornerRadius = CornerRadius(15f, 15f), style = stroke)
-            // Antennae
-            drawLine(color = outlineColor, start = Offset(cx - 10f, cy - 110f), end = Offset(cx - 40f, cy - 150f), strokeWidth = 5f)
-            drawLine(color = outlineColor, start = Offset(cx + 10f, cy - 110f), end = Offset(cx + 40f, cy - 150f), strokeWidth = 5f)
-            drawCircle(color = outlineColor, radius = 6f, center = Offset(cx - 40f, cy - 150f))
-            drawCircle(color = outlineColor, radius = 6f, center = Offset(cx + 40f, cy - 150f))
+            // 2x Butterfly Wings (Upper & Lower)
+            drawOval(color = outlineColor, topLeft = Offset(cx - 310f, cy - 250f), size = Size(290f, 240f), style = stroke)
+            drawOval(color = outlineColor, topLeft = Offset(cx + 20f, cy - 250f), size = Size(290f, 240f), style = stroke)
+            drawOval(color = outlineColor, topLeft = Offset(cx - 240f, cy - 10f), size = Size(230f, 190f), style = stroke)
+            drawOval(color = outlineColor, topLeft = Offset(cx + 10f, cy - 10f), size = Size(230f, 190f), style = stroke)
+
+            // Wing decorative circles for toddler coloring
+            drawCircle(color = outlineColor, radius = 32f, center = Offset(cx - 165f, cy - 130f), style = detailStroke)
+            drawCircle(color = outlineColor, radius = 32f, center = Offset(cx + 165f, cy - 130f), style = detailStroke)
+            drawCircle(color = outlineColor, radius = 24f, center = Offset(cx - 125f, cy + 85f), style = detailStroke)
+            drawCircle(color = outlineColor, radius = 24f, center = Offset(cx + 125f, cy + 85f), style = detailStroke)
+
+            // 2x Butterfly Body
+            drawRoundRect(color = outlineColor, topLeft = Offset(cx - 28f, cy - 210f), size = Size(56f, 350f), cornerRadius = CornerRadius(28f, 28f), style = stroke)
+
+            // Cute facial features
+            drawCircle(color = outlineColor, radius = 7f, center = Offset(cx - 12f, cy - 160f))
+            drawCircle(color = outlineColor, radius = 7f, center = Offset(cx + 12f, cy - 160f))
+            drawArc(color = outlineColor, startAngle = 10f, sweepAngle = 160f, useCenter = false, topLeft = Offset(cx - 12f, cy - 148f), size = Size(24f, 16f), style = detailStroke)
+
+            // 2x Antennae
+            drawLine(color = outlineColor, start = Offset(cx - 14f, cy - 210f), end = Offset(cx - 75f, cy - 295f), strokeWidth = 12f, cap = StrokeCap.Round)
+            drawLine(color = outlineColor, start = Offset(cx + 14f, cy - 210f), end = Offset(cx + 75f, cy - 295f), strokeWidth = 12f, cap = StrokeCap.Round)
+            drawCircle(color = outlineColor, radius = 14f, center = Offset(cx - 75f, cy - 295f))
+            drawCircle(color = outlineColor, radius = 14f, center = Offset(cx + 75f, cy - 295f))
         }
+
         ColoringTemplate.DINOSAUR -> {
-            // Dino body & head
-            drawRoundRect(color = outlineColor, topLeft = Offset(cx - 100f, cy - 40f), size = Size(180f, 120f), cornerRadius = CornerRadius(50f, 50f), style = stroke)
-            // Neck & head
-            drawLine(color = outlineColor, start = Offset(cx - 70f, cy - 30f), end = Offset(cx - 70f, cy - 130f), strokeWidth = 14f)
-            drawOval(color = outlineColor, topLeft = Offset(cx - 110f, cy - 160f), size = Size(70f, 45f), style = stroke)
-            // Legs
-            drawRoundRect(color = outlineColor, topLeft = Offset(cx - 70f, cy + 70f), size = Size(30f, 60f), cornerRadius = CornerRadius(10f, 10f), style = stroke)
-            drawRoundRect(color = outlineColor, topLeft = Offset(cx + 30f, cy + 70f), size = Size(30f, 60f), cornerRadius = CornerRadius(10f, 10f), style = stroke)
-            // Tail
-            drawLine(color = outlineColor, start = Offset(cx + 80f, cy + 20f), end = Offset(cx + 150f, cy - 20f), strokeWidth = 10f)
+            // 2x Dino Body
+            drawRoundRect(color = outlineColor, topLeft = Offset(cx - 200f, cy - 70f), size = Size(350f, 230f), cornerRadius = CornerRadius(95f, 95f), style = stroke)
+
+            // 2x Dino Neck
+            drawLine(color = outlineColor, start = Offset(cx - 140f, cy - 60f), end = Offset(cx - 140f, cy - 240f), strokeWidth = 24f, cap = StrokeCap.Round)
+            drawLine(color = outlineColor, start = Offset(cx - 85f, cy - 60f), end = Offset(cx - 85f, cy - 240f), strokeWidth = 24f, cap = StrokeCap.Round)
+
+            // 2x Dino Head
+            drawOval(color = outlineColor, topLeft = Offset(cx - 220f, cy - 300f), size = Size(140f, 90f), style = stroke)
+            drawCircle(color = outlineColor, radius = 10f, center = Offset(cx - 170f, cy - 265f))
+            drawArc(color = outlineColor, startAngle = 10f, sweepAngle = 150f, useCenter = false, topLeft = Offset(cx - 205f, cy - 250f), size = Size(36f, 22f), style = detailStroke)
+
+            // 2x Legs
+            drawRoundRect(color = outlineColor, topLeft = Offset(cx - 140f, cy + 145f), size = Size(58f, 110f), cornerRadius = CornerRadius(18f, 18f), style = stroke)
+            drawRoundRect(color = outlineColor, topLeft = Offset(cx + 60f, cy + 145f), size = Size(58f, 110f), cornerRadius = CornerRadius(18f, 18f), style = stroke)
+
+            // 2x Tail
+            val tailPath = Path().apply {
+                moveTo(cx + 140f, cy + 20f)
+                quadraticTo(cx + 250f, cy - 20f, cx + 290f, cy - 40f)
+                quadraticTo(cx + 230f, cy + 80f, cx + 130f, cy + 110f)
+            }
+            drawPath(path = tailPath, color = outlineColor, style = stroke)
+
+            // Cute Spikes along back
+            val spikes = Path().apply {
+                moveTo(cx - 50f, cy - 70f); lineTo(cx - 30f, cy - 125f); lineTo(cx - 10f, cy - 70f)
+                moveTo(cx, cy - 70f); lineTo(cx + 20f, cy - 125f); lineTo(cx + 40f, cy - 70f)
+                moveTo(cx + 50f, cy - 70f); lineTo(cx + 70f, cy - 125f); lineTo(cx + 90f, cy - 70f)
+            }
+            drawPath(path = spikes, color = outlineColor, style = stroke)
         }
+
         ColoringTemplate.ROCKET -> {
-            // Rocket main body cone
+            // 2x Rocket Main Body Cone
             val rocketPath = Path().apply {
-                moveTo(cx, cy - 160f)
-                lineTo(cx + 65f, cy + 40f)
-                lineTo(cx - 65f, cy + 40f)
+                moveTo(cx, cy - 320f)
+                lineTo(cx + 130f, cy + 80f)
+                lineTo(cx - 130f, cy + 80f)
                 close()
             }
             drawPath(path = rocketPath, color = outlineColor, style = stroke)
-            // Porthole window
-            drawCircle(color = outlineColor, radius = 28f, center = Offset(cx, cy - 30f), style = stroke)
-            // Fins
+
+            // Nose cone stripe
+            drawLine(color = outlineColor, start = Offset(cx - 65f, cy - 120f), end = Offset(cx + 65f, cy - 120f), strokeWidth = 14f, cap = StrokeCap.Round)
+
+            // 2x Porthole Window
+            drawCircle(color = outlineColor, radius = 56f, center = Offset(cx, cy - 35f), style = stroke)
+            drawCircle(color = outlineColor, radius = 38f, center = Offset(cx, cy - 35f), style = detailStroke)
+
+            // 2x Rocket Fins
             val leftFin = Path().apply {
-                moveTo(cx - 65f, cy)
-                lineTo(cx - 115f, cy + 70f)
-                lineTo(cx - 65f, cy + 40f)
+                moveTo(cx - 130f, cy)
+                lineTo(cx - 230f, cy + 140f)
+                lineTo(cx - 130f, cy + 80f)
                 close()
             }
             drawPath(path = leftFin, color = outlineColor, style = stroke)
+
             val rightFin = Path().apply {
-                moveTo(cx + 65f, cy)
-                lineTo(cx + 115f, cy + 70f)
-                lineTo(cx + 65f, cy + 40f)
+                moveTo(cx + 130f, cy)
+                lineTo(cx + 230f, cy + 140f)
+                lineTo(cx + 130f, cy + 80f)
                 close()
             }
             drawPath(path = rightFin, color = outlineColor, style = stroke)
+
+            // 2x Thruster Flames
+            val flames = Path().apply {
+                moveTo(cx - 70f, cy + 80f)
+                lineTo(cx - 40f, cy + 175f)
+                lineTo(cx, cy + 115f)
+                lineTo(cx + 40f, cy + 175f)
+                lineTo(cx + 70f, cy + 80f)
+                close()
+            }
+            drawPath(path = flames, color = outlineColor, style = stroke)
         }
+
         ColoringTemplate.TEDDY -> {
-            // Teddy Bear Head
-            drawCircle(color = outlineColor, radius = 75f, center = Offset(cx, cy - 60f), style = stroke)
-            // Ears
-            drawCircle(color = outlineColor, radius = 25f, center = Offset(cx - 65f, cy - 125f), style = stroke)
-            drawCircle(color = outlineColor, radius = 25f, center = Offset(cx + 65f, cy - 125f), style = stroke)
-            // Body
-            drawOval(color = outlineColor, topLeft = Offset(cx - 70f, cy + 10f), size = Size(140f, 130f), style = stroke)
-            // Snout
-            drawOval(color = outlineColor, topLeft = Offset(cx - 30f, cy - 50f), size = Size(60f, 40f), style = stroke)
+            // 2x Teddy Bear Head
+            drawCircle(color = outlineColor, radius = 140f, center = Offset(cx, cy - 100f), style = stroke)
+
+            // 2x Ears
+            drawCircle(color = outlineColor, radius = 50f, center = Offset(cx - 120f, cy - 220f), style = stroke)
+            drawCircle(color = outlineColor, radius = 26f, center = Offset(cx - 120f, cy - 220f), style = detailStroke)
+            drawCircle(color = outlineColor, radius = 50f, center = Offset(cx + 120f, cy - 220f), style = stroke)
+            drawCircle(color = outlineColor, radius = 26f, center = Offset(cx + 120f, cy - 220f), style = detailStroke)
+
+            // 2x Body
+            drawOval(color = outlineColor, topLeft = Offset(cx - 135f, cy + 25f), size = Size(270f, 250f), style = stroke)
+
+            // Belly Patch
+            drawOval(color = outlineColor, topLeft = Offset(cx - 85f, cy + 75f), size = Size(170f, 150f), style = detailStroke)
+
+            // 2x Snout & Cute Face
+            drawOval(color = outlineColor, topLeft = Offset(cx - 55f, cy - 80f), size = Size(110f, 75f), style = stroke)
+            drawOval(color = outlineColor, topLeft = Offset(cx - 24f, cy - 85f), size = Size(48f, 32f))
+            drawArc(color = outlineColor, startAngle = 10f, sweepAngle = 160f, useCenter = false, topLeft = Offset(cx - 30f, cy - 55f), size = Size(60f, 35f), style = detailStroke)
+            drawCircle(color = outlineColor, radius = 12f, center = Offset(cx - 55f, cy - 135f))
+            drawCircle(color = outlineColor, radius = 12f, center = Offset(cx + 55f, cy - 135f))
         }
-        ColoringTemplate.BLANK -> {
-            // Pure blank canvas
+
+        ColoringTemplate.STAR -> {
+            // 2x Toddler Friendly Star
+            val starPath = Path()
+            for (i in 0 until 10) {
+                val angle = (i * 36 - 90) * (Math.PI / 180.0)
+                val r = if (i % 2 == 0) 240f else 115f
+                val px = cx + (r * cos(angle)).toFloat()
+                val py = cy + (r * sin(angle)).toFloat()
+                if (i == 0) starPath.moveTo(px, py) else starPath.lineTo(px, py)
+            }
+            starPath.close()
+            drawPath(path = starPath, color = outlineColor, style = stroke)
+
+            // Smiling Face in Star Center
+            drawCircle(color = outlineColor, radius = 12f, center = Offset(cx - 45f, cy - 20f))
+            drawCircle(color = outlineColor, radius = 12f, center = Offset(cx + 45f, cy - 20f))
+            drawArc(color = outlineColor, startAngle = 10f, sweepAngle = 160f, useCenter = false, topLeft = Offset(cx - 35f, cy - 10f), size = Size(70f, 45f), style = detailStroke)
+            drawCircle(color = outlineColor, radius = 14f, center = Offset(cx - 70f, cy + 10f), style = detailStroke)
+            drawCircle(color = outlineColor, radius = 14f, center = Offset(cx + 70f, cy + 10f), style = detailStroke)
         }
+
+        ColoringTemplate.HEART -> {
+            // 2x Giant Heart
+            val heartPath = Path().apply {
+                moveTo(cx, cy + 220f)
+                cubicTo(cx - 260f, cy + 80f, cx - 280f, cy - 140f, cx - 130f, cy - 190f)
+                cubicTo(cx - 40f, cy - 220f, cx, cy - 110f, cx, cy - 90f)
+                cubicTo(cx, cy - 110f, cx + 40f, cy - 220f, cx + 130f, cy - 190f)
+                cubicTo(cx + 280f, cy - 140f, cx + 260f, cy + 80f, cx, cy + 220f)
+                close()
+            }
+            drawPath(path = heartPath, color = outlineColor, style = stroke)
+
+            // Cute Happy Eyes & Smile
+            drawCircle(color = outlineColor, radius = 12f, center = Offset(cx - 50f, cy - 30f))
+            drawCircle(color = outlineColor, radius = 12f, center = Offset(cx + 50f, cy - 30f))
+            drawArc(color = outlineColor, startAngle = 10f, sweepAngle = 160f, useCenter = false, topLeft = Offset(cx - 35f, cy - 15f), size = Size(70f, 45f), style = detailStroke)
+        }
+
+        ColoringTemplate.FLOWER -> {
+            // 2x Giant Flower Center
+            drawCircle(color = outlineColor, radius = 80f, center = Offset(cx, cy - 40f), style = stroke)
+
+            // 6 Big Rounded Petals
+            for (i in 0 until 6) {
+                val angle = (i * 60) * (Math.PI / 180.0)
+                val petalX = cx + (145f * cos(angle)).toFloat()
+                val petalY = (cy - 40f) + (145f * sin(angle)).toFloat()
+                drawCircle(color = outlineColor, radius = 75f, center = Offset(petalX, petalY), style = stroke)
+            }
+
+            // Smiling Face in Flower Center
+            drawCircle(color = outlineColor, radius = 10f, center = Offset(cx - 30f, cy - 55f))
+            drawCircle(color = outlineColor, radius = 10f, center = Offset(cx + 30f, cy - 55f))
+            drawArc(color = outlineColor, startAngle = 15f, sweepAngle = 150f, useCenter = false, topLeft = Offset(cx - 25f, cy - 45f), size = Size(50f, 35f), style = detailStroke)
+
+            // Stem & Big Leaves
+            drawLine(color = outlineColor, start = Offset(cx, cy + 185f), end = Offset(cx, cy + 285f), strokeWidth = 18f, cap = StrokeCap.Round)
+            val leftLeaf = Path().apply {
+                moveTo(cx, cy + 235f)
+                quadraticTo(cx - 90f, cy + 205f, cx - 110f, cy + 245f)
+                quadraticTo(cx - 60f, cy + 275f, cx, cy + 265f)
+                close()
+            }
+            drawPath(path = leftLeaf, color = outlineColor, style = stroke)
+        }
+
+        ColoringTemplate.FISH -> {
+            // 2x Giant Ocean Fish Body
+            drawOval(color = outlineColor, topLeft = Offset(cx - 210f, cy - 120f), size = Size(340f, 240f), style = stroke)
+
+            // Tail Fin
+            val tail = Path().apply {
+                moveTo(cx + 120f, cy)
+                lineTo(cx + 250f, cy - 130f)
+                lineTo(cx + 200f, cy)
+                lineTo(cx + 250f, cy + 130f)
+                close()
+            }
+            drawPath(path = tail, color = outlineColor, style = stroke)
+
+            // Dorsal Fin
+            val topFin = Path().apply {
+                moveTo(cx - 70f, cy - 110f)
+                quadraticTo(cx, cy - 210f, cx + 70f, cy - 100f)
+                close()
+            }
+            drawPath(path = topFin, color = outlineColor, style = stroke)
+
+            // Eye & Smile
+            drawCircle(color = outlineColor, radius = 24f, center = Offset(cx - 120f, cy - 35f), style = stroke)
+            drawCircle(color = outlineColor, radius = 12f, center = Offset(cx - 125f, cy - 35f))
+            drawArc(color = outlineColor, startAngle = 20f, sweepAngle = 140f, useCenter = false, topLeft = Offset(cx - 180f, cy + 10f), size = Size(40f, 30f), style = detailStroke)
+
+            // Gill Arc
+            drawArc(color = outlineColor, startAngle = 270f, sweepAngle = 180f, useCenter = false, topLeft = Offset(cx - 70f, cy - 100f), size = Size(50f, 200f), style = detailStroke)
+        }
+
+        ColoringTemplate.BLANK -> {}
     }
 }
 
-private fun shareArtwork(context: Context, templateTitle: String) {
-    val shareBody = "Look at my beautiful $templateTitle coloring artwork created on Tiny Trails! 🎨✨ Proud toddler artist creation!"
-    ShareHelper.shareText(
-        context = context,
-        subject = "Tiny Trails Masterpiece: $templateTitle 🎨",
-        body = shareBody,
-        chooserTitle = "Share Tiny Trails Artwork"
-    )
+private fun createArtworkBitmap(
+    template: ColoringTemplate,
+    strokes: List<ColoringStroke>,
+    canvasWidth: Int,
+    canvasHeight: Int
+): Bitmap {
+    val width = if (canvasWidth > 0) canvasWidth else 1080
+    val height = if (canvasHeight > 0) canvasHeight else 1080
+    val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+    val composeCanvas = androidx.compose.ui.graphics.Canvas(bitmap.asImageBitmap())
+    val drawScope = CanvasDrawScope()
+
+    drawScope.draw(
+        density = Density(2f),
+        layoutDirection = LayoutDirection.Ltr,
+        canvas = composeCanvas,
+        size = Size(width.toFloat(), height.toFloat())
+    ) {
+        // 1. Draw solid clean white paper background
+        drawRect(Color.White)
+
+        // 2. Draw template outline background
+        drawTemplateOutline(template)
+
+        // 3. Draw committed coloring strokes
+        for (stroke in strokes) {
+            renderColoringStroke(stroke, shimmerPhase = 0f)
+        }
+
+        // 4. Draw bold crisp template outline on top so borders and shape stay sharp
+        if (template != ColoringTemplate.BLANK) {
+            drawTemplateOutline(template)
+        }
+    }
+    return bitmap
+}
+
+private fun shareArtwork(
+    context: Context,
+    template: ColoringTemplate,
+    strokes: List<ColoringStroke>,
+    canvasWidth: Int,
+    canvasHeight: Int
+) {
+    try {
+        val bitmap = createArtworkBitmap(template, strokes, canvasWidth, canvasHeight)
+        val caption = "Look at my beautiful ${template.title} coloring artwork created on Tiny Trails! 🎨✨ Proud toddler artist creation!"
+        ShareHelper.shareImage(
+            context = context,
+            bitmap = bitmap,
+            subject = "Tiny Trails Masterpiece: ${template.title} 🎨",
+            captionText = caption,
+            chooserTitle = "Share Tiny Trails Artwork"
+        )
+    } catch (e: Exception) {
+        val fallbackText = "Look at my beautiful ${template.title} coloring artwork created on Tiny Trails! 🎨✨ Proud toddler artist creation!"
+        ShareHelper.shareText(
+            context = context,
+            subject = "Tiny Trails Masterpiece: ${template.title} 🎨",
+            body = fallbackText,
+            chooserTitle = "Share Tiny Trails Artwork"
+        )
+    }
 }

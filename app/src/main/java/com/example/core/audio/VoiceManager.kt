@@ -40,9 +40,9 @@ class VoiceManager private constructor(private val context: Context) : TextToSpe
 
     // Child voice acoustic parameters:
     // pitch 1.32f shifts formant register into sweet, natural 4-6 year old child voice
-    // speechRate 0.85f keeps instructions clear, gentle, and unhurried for toddlers
+    // speechRate 0.68f is 20% slower, keeping instructions soothing, crystal clear, and easy for toddlers to follow
     var childPitchFactor: Float = 1.32f
-    var childSpeechRate: Float = 0.85f
+    var childSpeechRate: Float = 0.68f
     var voiceVolume: Float = 1.0f
 
     fun setVolume(volume: Float) {
