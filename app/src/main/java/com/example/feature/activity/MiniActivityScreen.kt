@@ -461,7 +461,7 @@ private fun SimpleMatchingGame(
                     Text(
                         text = character,
                         fontSize = 48.sp,
-                        fontWeight = FontWeight.ExtraBold,
+                        fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
                     )
                 }
@@ -585,7 +585,7 @@ private fun TapCorrectGame(
         Text(
             text = "Tap: '$targetChar'!",
             style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.ExtraBold,
+            fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.primary
         )
 

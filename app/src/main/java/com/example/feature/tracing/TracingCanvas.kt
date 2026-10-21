@@ -13,7 +13,8 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -135,21 +136,26 @@ fun TracingCanvas(
                     val left = (canvasWidth - boxSize) / 2f
                     val top = (canvasHeight - boxSize) / 2f
 
-                    detectDragGestures(
-                        onDragStart = { offset ->
-                            val normX = (offset.x - left) / boxSize
-                            val normY = (offset.y - top) / boxSize
-                            onTouchDown(NormalizedPoint(normX, normY))
-                        },
-                        onDrag = { change, _ ->
-                            change.consume()
-                            val normX = (change.position.x - left) / boxSize
-                            val normY = (change.position.y - top) / boxSize
+                    awaitEachGesture {
+                        val down = awaitFirstDown(requireUnconsumed = false)
+                        val normDownX = (down.position.x - left) / boxSize
+                        val normDownY = (down.position.y - top) / boxSize
+                        onTouchDown(NormalizedPoint(normDownX, normDownY))
+                        down.consume()
+
+                        do {
+                            val event = awaitPointerEvent()
+                            val pointer = event.changes.firstOrNull { it.id == down.id } ?: break
+                            if (!pointer.pressed) break
+
+                            pointer.consume()
+                            val normX = (pointer.position.x - left) / boxSize
+                            val normY = (pointer.position.y - top) / boxSize
                             onTouchMove(NormalizedPoint(normX, normY))
-                        },
-                        onDragEnd = { onTouchUp() },
-                        onDragCancel = { onTouchUp() }
-                    )
+                        } while (event.changes.any { it.pressed })
+
+                        onTouchUp()
+                    }
                 }
         ) {
             val canvasW = size.width
@@ -267,7 +273,7 @@ fun TracingCanvas(
                     Text(
                         text = "$percentValue%",
                         fontSize = 12.sp,
-                        fontWeight = FontWeight.Black,
+                        fontWeight = FontWeight.SemiBold,
                         color = Color(0xFF0288D1)
                     )
                 }
@@ -383,10 +389,17 @@ private fun DrawScope.drawActiveUserProgress(
     trackWidthPx: Float
 ) {
     val activeStroke = state.activeStroke ?: return
-    if (state.highestReachedCheckpointIndex <= 0) return
+    if (state.highestReachedCheckpointIndex <= 0 && state.smoothHeadPosition == null) return
 
     val checkpoints = activeStroke.checkpoints
-    val subPoints = checkpoints.take(state.highestReachedCheckpointIndex + 1)
+    val subPoints = checkpoints.take(state.highestReachedCheckpointIndex + 1).toMutableList()
+    state.smoothHeadPosition?.let { headPos ->
+        if (subPoints.isNotEmpty()) {
+            subPoints[subPoints.lastIndex] = headPos
+        } else {
+            subPoints.add(headPos)
+        }
+    }
     if (subPoints.size < 2) return
 
     val subPath = createPathFromPoints(subPoints, bounds)
@@ -400,8 +413,10 @@ private fun DrawScope.drawActiveUserProgress(
         )
     )
 
-    // Visual progress tip at the current frontier along the path
-    val headPoint = toScreenOffset(checkpoints[state.highestReachedCheckpointIndex], bounds)
+    // Continuous gliding progress tip at the child's exact frontier
+    val headPoint = state.smoothHeadPosition?.let { toScreenOffset(it, bounds) }
+        ?: toScreenOffset(checkpoints[state.highestReachedCheckpointIndex], bounds)
+
     drawCircle(
         color = Color.White,
         radius = trackWidthPx * 0.44f,
@@ -466,14 +481,7 @@ private fun DrawScope.drawUserFingerTrail(
 ) {
     if (state.activeUserPoints.size < 2) return
 
-    val trailPath = Path()
-    val first = toScreenOffset(state.activeUserPoints.first(), bounds)
-    trailPath.moveTo(first.x, first.y)
-
-    for (i in 1 until state.activeUserPoints.size) {
-        val pt = toScreenOffset(state.activeUserPoints[i], bounds)
-        trailPath.lineTo(pt.x, pt.y)
-    }
+    val trailPath = createPathFromPoints(state.activeUserPoints, bounds)
 
     val trailColor = if (state.feedback == TracingFeedback.OFF_CORRIDOR) {
         ErrorTrailColor.copy(alpha = 0.65f)
@@ -650,13 +658,27 @@ private fun createPathFromPoints(points: List<NormalizedPoint>, bounds: Rect): P
     val path = Path()
     if (points.isEmpty()) return path
 
-    val first = toScreenOffset(points[0], bounds)
-    path.moveTo(first.x, first.y)
+    val p0 = toScreenOffset(points[0], bounds)
+    path.moveTo(p0.x, p0.y)
 
-    for (i in 1 until points.size) {
-        val pt = toScreenOffset(points[i], bounds)
-        path.lineTo(pt.x, pt.y)
+    if (points.size == 1) return path
+    if (points.size == 2) {
+        val p1 = toScreenOffset(points[1], bounds)
+        path.lineTo(p1.x, p1.y)
+        return path
     }
+
+    // Quadratic Bezier midpoint smoothing creates silk-smooth fluid curves
+    for (i in 1 until points.size - 1) {
+        val p1 = toScreenOffset(points[i], bounds)
+        val p2 = toScreenOffset(points[i + 1], bounds)
+        val midX = (p1.x + p2.x) / 2f
+        val midY = (p1.y + p2.y) / 2f
+        path.quadraticBezierTo(p1.x, p1.y, midX, midY)
+    }
+
+    val last = toScreenOffset(points.last(), bounds)
+    path.lineTo(last.x, last.y)
     return path
 }
 

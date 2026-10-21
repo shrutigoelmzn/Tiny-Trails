@@ -173,7 +173,7 @@ private fun StatPill(label: String, value: String) {
         Text(
             text = value,
             style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.ExtraBold,
+            fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.primary
         )
         Text(

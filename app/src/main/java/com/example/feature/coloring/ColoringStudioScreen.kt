@@ -575,7 +575,7 @@ fun ColoringStudioScreen(
                             Text(
                                 text = "Share Artwork",
                                 style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.ExtraBold
+                                fontWeight = FontWeight.SemiBold
                             )
                         }
                     },

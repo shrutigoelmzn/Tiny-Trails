@@ -80,8 +80,8 @@ fun KidsTopBar(
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleLarge.copy(
-                    fontWeight = FontWeight.ExtraBold,
-                    fontSize = 22.sp
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 20.sp
                 ),
                 color = MaterialTheme.colorScheme.onBackground,
                 maxLines = 1,

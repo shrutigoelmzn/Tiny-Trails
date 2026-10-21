@@ -271,7 +271,7 @@ fun StickerGalleryScreen(
                             Text(
                                 text = sticker.displayName,
                                 style = MaterialTheme.typography.headlineMedium,
-                                fontWeight = FontWeight.ExtraBold,
+                                fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary
                             )
 

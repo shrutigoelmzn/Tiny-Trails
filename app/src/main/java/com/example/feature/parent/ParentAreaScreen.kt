@@ -85,7 +85,7 @@ fun ParentGateDialog(
         title = {
             Text(
                 text = "Grown-Ups Only 🛡️",
-                fontWeight = FontWeight.ExtraBold,
+                fontWeight = FontWeight.Bold,
                 style = MaterialTheme.typography.titleLarge
             )
         },
@@ -98,7 +98,7 @@ fun ParentGateDialog(
                 Text(
                     text = "$num1 + $num2 = ?",
                     style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Black,
+                    fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
                 )
                 OutlinedTextField(
@@ -197,7 +197,7 @@ fun ParentAreaScreen(
             Text(
                 text = "Learning Progress Overview",
                 style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.ExtraBold,
+                fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
             )
 
@@ -443,7 +443,7 @@ private fun ProgressCard(
                 Text(
                     text = "${(percent * 100).toInt()}% ($completed / $total)",
                     style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.ExtraBold,
+                    fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.primary
                 )
             }

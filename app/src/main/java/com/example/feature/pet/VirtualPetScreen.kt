@@ -190,7 +190,7 @@ fun VirtualPetScreen(
                         Column {
                             Text(
                                 text = "Friendship Level ${petState.level}",
-                                fontWeight = FontWeight.ExtraBold,
+                                fontWeight = FontWeight.SemiBold,
                                 style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.primary
                             )
@@ -458,7 +458,7 @@ fun VirtualPetScreen(
                                     Text(
                                         text = if (isUnlocked) acc.title else "Lv ${acc.unlockLevel}",
                                         fontSize = 11.sp,
-                                        fontWeight = if (isEquipped) FontWeight.ExtraBold else FontWeight.Medium,
+                                        fontWeight = if (isEquipped) FontWeight.SemiBold else FontWeight.Medium,
                                         color = if (isEquipped) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                                         textAlign = TextAlign.Center,
                                         maxLines = 1

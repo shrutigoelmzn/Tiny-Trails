@@ -1,6 +1,6 @@
 {
   "name": "Tiny Trails",
-  "description": "Preschool tracing, shapes, glitter coloring, virtual pet companion, and milestone certificates.",
+  "description": "An interactive early learning, handwriting and tracing adventure for kids",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

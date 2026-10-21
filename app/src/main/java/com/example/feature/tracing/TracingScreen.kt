@@ -46,6 +46,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -86,6 +90,18 @@ fun TracingScreen(
     val traceUiState by viewModel.traceUiState.collectAsState()
     val celebrationCount by viewModel.celebrationTriggerCount.collectAsState()
     val characterContent = PrototypeCharacters.findById(characterId) ?: PrototypeCharacters.NUMBER_1
+
+    var showCompletionCard by remember { mutableStateOf(false) }
+
+    LaunchedEffect(state?.isCharacterCompleted, celebrationCount) {
+        if (state?.isCharacterCompleted == true) {
+            // First let the dramatic confetti explosion burst across the canvas for 750ms
+            delay(750)
+            showCompletionCard = true
+        } else {
+            showCompletionCard = false
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -136,7 +152,7 @@ fun TracingScreen(
                             ) {
                                 Text(
                                     text = "Skip ▶",
-                                    fontWeight = FontWeight.ExtraBold,
+                                    fontWeight = FontWeight.SemiBold,
                                     color = MaterialTheme.colorScheme.primary
                                 )
                             }
@@ -303,14 +319,16 @@ fun TracingScreen(
                     modifier = Modifier.fillMaxSize(),
                     isTriggered = true,
                     triggerKey = celebrationCount,
-                    particleCount = 140
+                    particleCount = 180,
+                    showShockwave = true,
+                    enableTapBurst = true
                 )
             }
 
-            // Completion Overlay Dialog
+            // Completion Overlay Dialog (smoothly appears after the initial confetti burst)
             AnimatedVisibility(
-                visible = state?.isCharacterCompleted == true,
-                enter = fadeIn() + scaleIn(),
+                visible = showCompletionCard && state?.isCharacterCompleted == true,
+                enter = fadeIn(tween(400)) + scaleIn(spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)),
                 modifier = Modifier.align(Alignment.Center)
             ) {
                 val infiniteTransition = rememberInfiniteTransition(label = "celebration_wobble")
@@ -359,7 +377,7 @@ fun TracingScreen(
                         Text(
                             text = stringResource(R.string.reward_screen_title),
                             style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.ExtraBold,
+                            fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary,
                             textAlign = TextAlign.Center
                         )
@@ -474,14 +492,14 @@ private fun TracingProgressIndicator(
                     Text(
                         text = "✏️ Path Progress",
                         style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.Black,
+                        fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     if (totalStrokes > 1) {
                         Text(
                             text = "(Stroke $currentStroke/$totalStrokes)",
                             style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.primary
                         )
                     }
@@ -499,7 +517,7 @@ private fun TracingProgressIndicator(
                 Text(
                     text = "$percent% • $statusText",
                     style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.ExtraBold,
+                    fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.primary
                 )
             }

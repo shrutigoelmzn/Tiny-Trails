@@ -127,7 +127,7 @@ fun SettingsScreen(
                             Text(
                                 text = stringResource(R.string.choose_theme),
                                 style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.ExtraBold,
+                                fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
@@ -204,7 +204,7 @@ fun SettingsScreen(
                             Text(
                                 text = stringResource(R.string.language_title),
                                 style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.ExtraBold,
+                                fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
@@ -272,7 +272,7 @@ fun SettingsScreen(
                             Text(
                                 text = "Music & Sound Effects",
                                 style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.ExtraBold,
+                                fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
@@ -311,7 +311,7 @@ fun SettingsScreen(
                                 Text(
                                     text = "Background Music",
                                     style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.Medium
                                 )
                                 Text(
                                     text = if (backgroundMusicEnabled) "Gentle lullaby active 🎵" else "Music paused 🔇",
@@ -363,7 +363,7 @@ fun SettingsScreen(
                                 Text(
                                     text = "Voice Guidance & Chimes",
                                     style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.Medium
                                 )
                                 Text(
                                     text = if (audioFeedbackEnabled) "Child voice narration on 🗣️" else "Narration muted",
@@ -412,13 +412,13 @@ fun SettingsScreen(
                                 Text(
                                     text = "App Volume",
                                     style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.Medium
                                 )
                             }
                             Text(
                                 text = "${(appVolume * 100).toInt()}%",
                                 style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.ExtraBold,
+                                fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.primary
                             )
                         }
@@ -555,7 +555,7 @@ private fun ThemeSelectCard(
                         Text(
                             text = title,
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
 
@@ -570,7 +570,7 @@ private fun ThemeSelectCard(
                                     text = "Active ✓",
                                     color = MaterialTheme.colorScheme.onPrimary,
                                     fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.SemiBold
                                 )
                             }
                         }
@@ -658,7 +658,7 @@ private fun LanguageOptionCard(
             Text(
                 text = label,
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.SemiBold,
                 color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
             )
             Text(
@@ -671,7 +671,7 @@ private fun LanguageOptionCard(
                     text = "Selected ✓",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.ExtraBold
+                    fontWeight = FontWeight.SemiBold
                 )
             }
         }
@@ -709,7 +709,7 @@ private fun ShortcutCard(
                 Text(
                     text = title,
                     style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(

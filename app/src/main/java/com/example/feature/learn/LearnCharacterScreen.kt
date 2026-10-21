@@ -93,11 +93,11 @@ fun LearnCharacterScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    // Giant Character with doubled thickness
+                    // Giant Character with clean prominent typography
                     Text(
                         text = item.displayValue,
                         fontSize = 135.sp,
-                        fontWeight = FontWeight.Black,
+                        fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary,
                         lineHeight = 140.sp
                     )
@@ -119,7 +119,7 @@ fun LearnCharacterScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Name pill with speaker - extra thick bold text
+                    // Name pill with speaker
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(24.dp))
@@ -142,7 +142,7 @@ fun LearnCharacterScreen(
                             Text(
                                 text = item.exampleWord,
                                 style = MaterialTheme.typography.headlineMedium,
-                                fontWeight = FontWeight.Black,
+                                fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSecondaryContainer
                             )
                         }

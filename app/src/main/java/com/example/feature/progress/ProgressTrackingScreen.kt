@@ -554,7 +554,7 @@ private fun FilterChip(
         Text(
             text = title,
             style = MaterialTheme.typography.labelMedium,
-            fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.Medium,
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
             color = if (selected) {
                 MaterialTheme.colorScheme.onSecondaryContainer
             } else {
@@ -618,14 +618,14 @@ private fun ProgressSummaryHeroCard(
                     Text(
                         text = masteryTitle,
                         style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.ExtraBold,
+                        fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.primary
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = "$totalStars Stars Earned!",
                         style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Black,
+                        fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                     Text(
@@ -787,7 +787,7 @@ private fun CharacterProgressBadgeCard(
                 Text(
                     text = character.displayValue,
                     fontSize = 32.sp,
-                    fontWeight = FontWeight.Black,
+                    fontWeight = FontWeight.Bold,
                     color = if (isCompleted) {
                         MaterialTheme.colorScheme.primary
                     } else {
@@ -948,7 +948,7 @@ private fun MilestoneBadgeCard(
                         Text(
                             text = "UNLOCKED ✨",
                             style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Black,
+                            fontWeight = FontWeight.SemiBold,
                             color = Color(0xFF2E7D32)
                         )
                     }

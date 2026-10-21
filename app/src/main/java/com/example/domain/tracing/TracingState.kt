@@ -18,6 +18,7 @@ data class TracingState(
     val visitedCheckpointIndices: Set<Int> = emptySet(),
     val completedStrokes: List<Int> = emptyList(),
     val activeUserPoints: List<NormalizedPoint> = emptyList(),
+    val smoothHeadPosition: NormalizedPoint? = null,
     val isCharacterCompleted: Boolean = false,
     val feedback: TracingFeedback = TracingFeedback.IDLE,
     val totalErrorTouches: Int = 0,

@@ -291,7 +291,9 @@ private fun DrawScope.drawParticleAtProgress(
     // Gravity displacement pulling downward as time progresses
     val gravityOffset = particle.gravityBias * (effectiveProgress * effectiveProgress)
 
-    val currentX = particle.originX + cos(particle.angleRad) * radialDistance
+    // Aerodynamic fluttering sway for tumbling confetti ribbons & stars
+    val sway = sin((effectiveProgress * 7f * PI + particle.id).toDouble()).toFloat() * (18f * (1f - effectiveProgress * 0.3f))
+    val currentX = particle.originX + cos(particle.angleRad) * radialDistance + sway
     val currentY = particle.originY + sin(particle.angleRad) * radialDistance + gravityOffset
 
     // Size pop: quick expansion to 1.25x in the first 15%, then gradual fade
@@ -388,37 +390,64 @@ private fun DrawScope.drawAmbientConfetti(
     screenHeight: Float,
     ambientProgress: Float
 ) {
-    val count = 24
+    val count = 48
     for (i in 0 until count) {
-        val seed = i * 47
-        val xBase = ((seed * 73) % screenWidth.toInt()).toFloat()
-        val speed = 0.6f + ((seed % 10) / 10f) * 0.8f
-        val yOffset = ((ambientProgress * speed + (i.toFloat() / count)) % 1f) * (screenHeight + 40f) - 20f
+        val seed = i * 53
+        val xBase = ((seed * 79) % screenWidth.toInt()).toFloat()
+        val speed = 0.5f + ((seed % 10) / 10f) * 0.9f
+        val yOffset = ((ambientProgress * speed + (i.toFloat() / count)) % 1f) * (screenHeight + 60f) - 30f
 
-        val sway = (sin((ambientProgress.toDouble() * 2.0 * PI) + i.toDouble()) * 22.0).toFloat()
+        val sway = (sin((ambientProgress.toDouble() * 3.0 * PI) + i.toDouble()) * 26.0).toFloat()
         val x = (xBase + sway).coerceIn(10f, screenWidth - 10f)
 
-        val color = ExplosionPalette[i % ExplosionPalette.size].copy(alpha = 0.55f)
-        val size = 9f + (i % 6)
+        val color = ExplosionPalette[i % ExplosionPalette.size].copy(alpha = 0.65f)
+        val size = 11f + (i % 7)
 
-        if (i % 3 == 0) {
-            drawStar(
-                center = Offset(x, yOffset),
-                radius = size * 0.9f,
-                color = color
-            )
-        } else {
-            drawCircle(
-                color = color,
-                radius = size * 0.5f,
-                center = Offset(x.toFloat(), yOffset)
-            )
+        when (i % 4) {
+            0 -> {
+                drawStar(
+                    center = Offset(x, yOffset),
+                    radius = size * 1.0f,
+                    color = color
+                )
+            }
+            1 -> {
+                drawSparkle(
+                    center = Offset(x, yOffset),
+                    radius = size * 0.9f,
+                    color = color
+                )
+            }
+            2 -> {
+                val rot = (ambientProgress * 720f + i * 45f) % 360f
+                rotate(rot, pivot = Offset(x, yOffset)) {
+                    drawRect(
+                        color = color,
+                        topLeft = Offset(x - size * 0.5f, yOffset - size * 1.2f),
+                        size = Size(size, size * 2.4f)
+                    )
+                }
+            }
+            else -> {
+                drawCircle(
+                    color = color,
+                    radius = size * 0.6f,
+                    center = Offset(x, yOffset)
+                )
+            }
         }
     }
 }
 
+private data class ParticleLaunch(
+    val origin: Offset,
+    val angleRad: Float,
+    val maxDist: Float,
+    val gravityBias: Float
+)
+
 /**
- * Helper to generate random explosion particles.
+ * Helper to generate random explosion particles with multi-cannon distribution.
  */
 private fun generateExplosionParticles(
     count: Int,
@@ -428,39 +457,63 @@ private fun generateExplosionParticles(
     maxDistanceMultiplier: Float = 1.0f
 ): List<ExplosionParticle> {
     val list = ArrayList<ExplosionParticle>(count)
+    val baseDimension = minOf(screenWidth, screenHeight)
 
     for (i in 0 until count) {
-        val angleRad = (Random.nextFloat() * 2f * PI).toFloat()
-
-        // Radial burst speed spread
-        val maxDist = (Random.nextFloat() * 260f + 120f) * maxDistanceMultiplier
-        val gravityBias = Random.nextFloat() * 220f + 90f
+        val launch = when {
+            count <= 30 -> {
+                val angle = (Random.nextFloat() * 2f * PI).toFloat()
+                val dist = (Random.nextFloat() * (baseDimension * 0.35f) + baseDimension * 0.12f) * maxDistanceMultiplier
+                val grav = Random.nextFloat() * (screenHeight * 0.18f) + 80f
+                ParticleLaunch(origin, angle, dist, grav)
+            }
+            i < count * 0.60f -> {
+                val angle = (Random.nextFloat() * 2f * PI).toFloat()
+                val dist = (Random.nextFloat() * (baseDimension * 0.70f) + baseDimension * 0.22f) * maxDistanceMultiplier
+                val grav = Random.nextFloat() * (screenHeight * 0.38f) + screenHeight * 0.15f
+                ParticleLaunch(origin, angle, dist, grav)
+            }
+            i < count * 0.80f -> {
+                val cannonOrigin = Offset(screenWidth * 0.06f, screenHeight * 0.95f)
+                val angle = (-PI / 2.0 + (Random.nextFloat() - 0.25f) * (PI / 2.5)).toFloat()
+                val dist = (Random.nextFloat() * (screenHeight * 0.88f) + screenHeight * 0.45f) * maxDistanceMultiplier
+                val grav = Random.nextFloat() * (screenHeight * 0.48f) + screenHeight * 0.30f
+                ParticleLaunch(cannonOrigin, angle, dist, grav)
+            }
+            else -> {
+                val cannonOrigin = Offset(screenWidth * 0.94f, screenHeight * 0.95f)
+                val angle = (-PI / 2.0 - (Random.nextFloat() - 0.25f) * (PI / 2.5)).toFloat()
+                val dist = (Random.nextFloat() * (screenHeight * 0.88f) + screenHeight * 0.45f) * maxDistanceMultiplier
+                val grav = Random.nextFloat() * (screenHeight * 0.48f) + screenHeight * 0.30f
+                ParticleLaunch(cannonOrigin, angle, dist, grav)
+            }
+        }
 
         val type = when {
-            i % 5 == 0 -> ExplosionParticleType.STAR
-            i % 5 == 1 -> ExplosionParticleType.SPARKLE
-            i % 5 == 2 -> ExplosionParticleType.CONFETTI_RECT
-            i % 5 == 3 -> ExplosionParticleType.GLOW_ORB
+            i % 6 == 0 -> ExplosionParticleType.STAR
+            i % 6 == 1 -> ExplosionParticleType.SPARKLE
+            i % 6 in 2..3 -> ExplosionParticleType.CONFETTI_RECT
+            i % 6 == 4 -> ExplosionParticleType.GLOW_ORB
             else -> ExplosionParticleType.CIRCLE
         }
 
         list.add(
             ExplosionParticle(
                 id = i,
-                originX = origin.x + (Random.nextFloat() - 0.5f) * 16f,
-                originY = origin.y + (Random.nextFloat() - 0.5f) * 16f,
-                angleRad = angleRad,
-                maxDistance = maxDist,
-                gravityBias = gravityBias,
+                originX = launch.origin.x + (Random.nextFloat() - 0.5f) * 20f,
+                originY = launch.origin.y + (Random.nextFloat() - 0.5f) * 20f,
+                angleRad = launch.angleRad,
+                maxDistance = launch.maxDist,
+                gravityBias = launch.gravityBias,
                 speedCurve = Random.nextFloat() * 0.4f + 0.8f,
-                size = Random.nextFloat() * 12f + 12f,
+                size = Random.nextFloat() * 14f + 14f,
                 color = ExplosionPalette.random(),
                 type = type,
                 initialRotation = Random.nextFloat() * 360f,
-                rotationDelta = (Random.nextFloat() - 0.5f) * 720f,
-                flipSpeed = Random.nextFloat() * 3f + 1.5f,
+                rotationDelta = (Random.nextFloat() - 0.5f) * 900f,
+                flipSpeed = Random.nextFloat() * 4f + 2f,
                 delayRatio = (Random.nextFloat() * 0.16f),
-                decayRatio = Random.nextFloat() * 0.20f + 0.65f
+                decayRatio = Random.nextFloat() * 0.22f + 0.72f
             )
         )
     }

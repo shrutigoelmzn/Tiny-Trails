@@ -54,8 +54,8 @@ fun KidsButton(
             Text(
                 text = text,
                 style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Black,
-                    fontSize = 20.sp
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 18.sp
                 ),
                 color = contentColor
             )

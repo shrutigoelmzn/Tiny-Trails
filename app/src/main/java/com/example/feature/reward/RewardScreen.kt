@@ -142,7 +142,7 @@ fun RewardScreen(
                     Text(
                         text = "Lesson Complete!",
                         style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.ExtraBold,
+                        fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary,
                         textAlign = TextAlign.Center
                     )

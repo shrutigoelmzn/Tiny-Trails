@@ -277,7 +277,7 @@ fun CertificateScreen(
                         Text(
                             text = "CERTIFICATE OF ACHIEVEMENT",
                             fontSize = 15.sp,
-                            fontWeight = FontWeight.ExtraBold,
+                            fontWeight = FontWeight.Bold,
                             color = Color(0xFF795548),
                             letterSpacing = 1.5.sp
                         )
@@ -285,7 +285,7 @@ fun CertificateScreen(
                         Text(
                             text = selectedCert.subtitle,
                             fontSize = 11.sp,
-                            fontWeight = FontWeight.Medium,
+                            fontWeight = FontWeight.Normal,
                             color = Color(0xFF8D6E63)
                         )
 
@@ -294,7 +294,7 @@ fun CertificateScreen(
                         Text(
                             text = "THIS IS PROUDLY PRESENTED TO",
                             fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.Medium,
                             color = Color(0xFF9E9E9E),
                             letterSpacing = 1.sp
                         )
@@ -305,7 +305,7 @@ fun CertificateScreen(
                         Text(
                             text = childName,
                             fontSize = 26.sp,
-                            fontWeight = FontWeight.ExtraBold,
+                            fontWeight = FontWeight.Bold,
                             color = Color(0xFF1B5E20),
                             textAlign = TextAlign.Center
                         )
@@ -380,7 +380,7 @@ fun CertificateScreen(
                                     Text(
                                         text = "AWARD",
                                         fontSize = 8.sp,
-                                        fontWeight = FontWeight.ExtraBold,
+                                        fontWeight = FontWeight.SemiBold,
                                         color = Color(0xFF4E342E)
                                     )
                                 }
@@ -484,7 +484,7 @@ fun CertificateScreen(
                             Text(
                                 text = "Share Diploma",
                                 style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.ExtraBold
+                                fontWeight = FontWeight.SemiBold
                             )
                         }
                     },

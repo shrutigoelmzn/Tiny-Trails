@@ -148,12 +148,13 @@ fun HomeScreen(
                     Text(
                         text = stringResource(R.string.app_name),
                         style = MaterialTheme.typography.headlineLarge,
-                        fontWeight = FontWeight.ExtraBold,
+                        fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
                     )
                     Text(
                         text = stringResource(R.string.hello_learner),
                         style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Normal,
                         color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f)
                     )
                 }
@@ -224,14 +225,14 @@ fun HomeScreen(
                             Text(
                                 text = stringResource(R.string.todays_learning),
                                 style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.ExtraBold,
+                                fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 text = "Next: ${activeStep.title}",
                                 style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = FontWeight.Bold,
+                                fontWeight = FontWeight.Medium,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.9f)
                             )
                         }
@@ -270,7 +271,7 @@ fun HomeScreen(
                                 Text(
                                     text = if (isDone) "✓" else "${idx + 1}",
                                     color = Color.White,
-                                    fontWeight = FontWeight.ExtraBold,
+                                    fontWeight = FontWeight.Bold,
                                     fontSize = 14.sp
                                 )
                             }
@@ -329,7 +330,7 @@ fun HomeScreen(
                             Text(
                                 text = stringResource(R.string.numbers_title),
                                 style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.ExtraBold,
+                                fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.primary
                             )
                             Text(
@@ -364,7 +365,7 @@ fun HomeScreen(
                             Text(
                                 text = stringResource(R.string.alphabet_title),
                                 style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.ExtraBold,
+                                fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.primary
                             )
                             Text(
@@ -407,7 +408,7 @@ fun HomeScreen(
                             Text(
                                 text = stringResource(R.string.shapes_title),
                                 style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.ExtraBold,
+                                fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.primary
                             )
                             Text(
@@ -417,7 +418,7 @@ fun HomeScreen(
                             )
                         }
                     }
-                    Text("◯ ⚡ 🌊 ▶", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                    Text("◯ ⚡ 🌊 ▶", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary)
                 }
             }
 
@@ -461,7 +462,7 @@ fun HomeScreen(
                             Text(
                                 text = stringResource(R.string.garden_title),
                                 style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.Bold,
+                                fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
@@ -497,7 +498,7 @@ fun HomeScreen(
                             Text(
                                 text = stringResource(R.string.stickers_title),
                                 style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.Bold,
+                                fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
@@ -541,7 +542,7 @@ fun HomeScreen(
                             Text(
                                 text = stringResource(R.string.coloring_title),
                                 style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.Bold,
+                                fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
@@ -577,7 +578,7 @@ fun HomeScreen(
                             Text(
                                 text = "Pet Pip",
                                 style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.Bold,
+                                fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
@@ -634,7 +635,7 @@ fun HomeScreen(
                         Text(
                             text = stringResource(R.string.progress_title),
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.ExtraBold,
+                            fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSecondaryContainer
                         )
                         Text(
@@ -647,7 +648,7 @@ fun HomeScreen(
                     Text(
                         text = "▶",
                         fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onSecondaryContainer
                     )
                 }
@@ -688,7 +689,7 @@ fun HomeScreen(
                         Text(
                             text = stringResource(R.string.certificates_title),
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.ExtraBold,
+                            fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onTertiaryContainer
                         )
                         Text(
@@ -701,7 +702,7 @@ fun HomeScreen(
                     Text(
                         text = "📜 ▶",
                         fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onTertiaryContainer
                     )
                 }
@@ -727,7 +728,7 @@ fun HomeScreen(
                         )
                         Text(
                             text = stringResource(R.string.settings_title),
-                            fontWeight = FontWeight.Black,
+                            fontWeight = FontWeight.SemiBold,
                             style = MaterialTheme.typography.titleLarge
                         )
                     }
@@ -743,7 +744,7 @@ fun HomeScreen(
                         Text(
                             text = stringResource(R.string.parent_controls_title),
                             style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.ExtraBold,
+                            fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.primary
                         )
 
@@ -870,13 +871,13 @@ fun HomeScreen(
                                         Text(
                                             text = stringResource(R.string.app_volume_title),
                                             style = MaterialTheme.typography.bodyLarge,
-                                            fontWeight = FontWeight.Bold
+                                            fontWeight = FontWeight.Medium
                                         )
                                     }
                                     Text(
                                         text = "${(appVolume * 100).toInt()}%",
                                         style = MaterialTheme.typography.labelLarge,
-                                        fontWeight = FontWeight.Black,
+                                        fontWeight = FontWeight.SemiBold,
                                         color = MaterialTheme.colorScheme.primary
                                     )
                                 }
@@ -898,7 +899,7 @@ fun HomeScreen(
                         Text(
                             text = stringResource(R.string.choose_theme),
                             style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.ExtraBold,
+                            fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.primary
                         )
 
@@ -926,7 +927,7 @@ fun HomeScreen(
                         Text(
                             text = stringResource(R.string.language_title),
                             style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.ExtraBold,
+                            fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.primary
                         )
 
@@ -948,7 +949,7 @@ fun HomeScreen(
                                 Box(modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp), contentAlignment = Alignment.Center) {
                                     Text(
                                         text = stringResource(R.string.lang_english),
-                                        fontWeight = FontWeight.Bold,
+                                        fontWeight = FontWeight.SemiBold,
                                         color = if (isEn) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
                                     )
                                 }
@@ -968,7 +969,7 @@ fun HomeScreen(
                                 Box(modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp), contentAlignment = Alignment.Center) {
                                     Text(
                                         text = stringResource(R.string.lang_hindi),
-                                        fontWeight = FontWeight.Bold,
+                                        fontWeight = FontWeight.SemiBold,
                                         color = if (isHi) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
                                     )
                                 }
@@ -986,7 +987,7 @@ fun HomeScreen(
                             shape = RoundedCornerShape(14.dp),
                             modifier = Modifier.fillMaxWidth().height(48.dp).testTag("settings_parent_area_button")
                         ) {
-                            Text(text = "Parent Area & Progress 🛡️", fontWeight = FontWeight.Bold)
+                            Text(text = "Parent Area & Progress 🛡️", fontWeight = FontWeight.SemiBold)
                         }
                     }
                 },
@@ -997,7 +998,7 @@ fun HomeScreen(
                     ) {
                         Text(
                             text = "Done",
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.SemiBold,
                             style = MaterialTheme.typography.titleMedium
                         )
                     }
@@ -1031,7 +1032,7 @@ private fun ThemeOptionCard(
             Text(
                 text = theme.title,
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
                 color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
             )
         }

@@ -210,7 +210,7 @@ fun CategorySelectionScreen(
                             Text(
                                 text = item.displayValue,
                                 fontSize = 56.sp,
-                                fontWeight = FontWeight.ExtraBold,
+                                fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary
                             )
 
@@ -223,7 +223,7 @@ fun CategorySelectionScreen(
                                 Text(
                                     text = item.exampleWord,
                                     style = MaterialTheme.typography.labelLarge,
-                                    fontWeight = FontWeight.Bold,
+                                    fontWeight = FontWeight.Medium,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                             }
